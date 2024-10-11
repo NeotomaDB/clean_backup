@@ -1,6 +1,6 @@
 # Neotoma Anonymized Backups
 
-This repository generates a container service for Neotoma that copies the Neotoma database into a container and overwrites sensitive data. The container then uploads the data to an S3 bucket where it is made publically available.
+This repository generates a container service for Neotoma that copies the [Neotoma database](https://neotomadb.org) into a container and overwrites sensitive data using a random `md5` hash. The container then uploads the data to a Neotoma [AWS S3 bucket]() where the snapshot is made publically available.
 
 The compressed file (XXXX) includes a small README and a script to re-build the database in a local Postgres instance.
 
