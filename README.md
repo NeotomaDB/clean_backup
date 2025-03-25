@@ -1,3 +1,6 @@
+[![lifecycle](https://img.shields.io/badge/lifecycle-stable-orange.svg)](https://www.tidyverse.org/lifecycle/#stable)
+
+
 # Neotoma Anonymized Backups
 
 This repository generates a container service for Neotoma that copies the [Neotoma database](https://neotomadb.org) into a container and overwrites sensitive data using a random `md5` hash. The container then uploads the data to a Neotoma [AWS S3 bucket]() where the snapshot is made publically available.
