@@ -1,4 +1,4 @@
-[![lifecycle](https://img.shields.io/badge/lifecycle-stable-orange.svg)](https://www.tidyverse.org/lifecycle/#stable)
+[![lifecycle](https://img.shields.io/badge/lifecycle-stable-green.svg)](https://www.tidyverse.org/lifecycle/#stable)
 
 
 # Neotoma Anonymized Backups
