@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "vpc-ACTUAL_VPC_ID"
+  },
+  {
+    "ParameterKey": "SubnetIds",
+    "ParameterValue": "subnet-PUBLIC_SUBNET_1,subnet-PUBLIC_SUBNET_2"
+  },
+  {
+    "ParameterKey": "DatabaseSecurityGroupId",
+    "ParameterValue": "sg-SECURITY_GROUP"
+  },
+  {
+    "ParameterKey": "RemoteUser",
+    "ParameterValue": "REMOTE_RDS_USERNAME"
+  },
+  {
+    "ParameterKey": "RemotePassword",
+    "ParameterValue": "REMOTE_RDS_PASSWORD"
+  },
+  {
+    "ParameterKey": "ImageUri",
+    "ParameterValue": "ECS_IMAGE_URI:latest"
+  },
+  {
+    "ParameterKey": "RDSEndpoint",
+    "ParameterValue": "RDS_URL_FOR_CONNECTION"
+  }
+]
