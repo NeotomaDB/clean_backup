@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Batch infrastructure for Neotoma database sanitization. This infrastructure pulls a container from ECS (neotoma-sanitizer) and deploys it using AWS Batch.'
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where your RDS instance is located. No default here. This is private, and specific to Neotoma.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnets with access to RDS
+  DatabaseSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security group that has access to your RDS instance
+  RemoteUser:
+    Type: String
+    NoEcho: true
+    Description: Remote database username
+  RemotePassword:
+    Type: String
+    NoEcho: true
+    Description: Remote database password
+  PostgresPassword:
+    Type: String
+    NoEcho: true
+    Default: postgres
+    Description: Local Postgres password
+  ImageUri:
+    Type: String
+    Description: ECR image URI (from build-and-push.sh output)
+  RDSEndpoint:
+    Type: String
+    Description: The address for the RDS server on which Neotoma is hosted.
+
+Resources:
+  # IAM Role for Batch Execution
+  BatchExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource: 
+                  - arn:aws:s3:::neotoma-remote-store/*
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: 
+                  - arn:aws:s3:::neotoma-remote-store
+
+  # Batch Compute Environment
+  ComputeEnvironment:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      State: ENABLED
+      ServiceRole: !Sub 'arn:aws:iam::${AWS::AccountId}:role/aws-service-role/batch.amazonaws.com/AWSServiceRoleForBatch'
+      ComputeResources:
+        Type: FARGATE
+        MaxvCpus: 4
+        Subnets: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref DatabaseSecurityGroupId
+
+  # Batch Job Queue
+  JobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      State: ENABLED
+      Priority: 1
+      ComputeEnvironmentOrder:
+        - Order: 1
+          ComputeEnvironment: !Ref ComputeEnvironment
+
+  # Job Definition
+  JobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      PlatformCapabilities:
+        - FARGATE
+      ContainerProperties:
+        Image: !Ref ImageUri
+        EphemeralStorage:
+          SizeInGiB: 50
+        ResourceRequirements:
+          - Type: VCPU
+            Value: "2"
+          - Type: MEMORY
+            Value: "8192"
+        JobRoleArn: !GetAtt BatchExecutionRole.Arn
+        ExecutionRoleArn: !GetAtt BatchExecutionRole.Arn
+        Environment:
+          - Name: REMOTE_USER
+            Value: !Ref RemoteUser
+          - Name: REMOTE_PASSWORD
+            Value: !Ref RemotePassword
+          - Name: POSTGRES_PASSWORD
+            Value: !Ref PostgresPassword
+          - Name: RDS_ENDPOINT
+            Value: !Ref RDSEndpoint
+          - Name: RDS_PORT
+            Value: "5432"
+        NetworkConfiguration:
+          AssignPublicIp: ENABLED
+        FargatePlatformConfiguration:
+          PlatformVersion: LATEST
+
+  # EventBridge Rule for Monthly Execution
+  ScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Run database sanitization monthly"
+      ScheduleExpression: "cron(0 2 1 * ? *)"  # 2 AM on the 1st of every month
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt JobQueue.JobQueueArn
+          Id: "BatchJobTarget"
+          RoleArn: !GetAtt EventBridgeRole.Arn
+          BatchParameters:
+            JobDefinition: !Ref JobDefinition
+            JobName: "monthly-db-sanitization"
+
+  # IAM Role for EventBridge
+  EventBridgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BatchJobExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - batch:SubmitJob
+                Resource: '*'
+
+Outputs:
+  JobDefinitionArn:
+    Description: ARN of the Batch Job Definition
+    Value: !Ref JobDefinition
+  JobQueueArn:
+    Description: ARN of the Batch Job Queue
+    Value: !Ref JobQueue
+  ComputeEnvironmentArn:
+    Description: ARN of the Batch Compute Environment
+    Value: !Ref ComputeEnvironment

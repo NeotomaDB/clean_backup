@@ -23,8 +23,6 @@ is used to restore the Neotoma snapshot to a local database called
 profile. There are cases where individuals have set up PostgreSQL
 to run under a different user's account.
 
-sudo -U postgres bash regenbash.sh 
-
 DOCUMENTATIONXX
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -65,7 +63,6 @@ for i in "$@"; do
   esac
 done
 
-
 if [[ $(which psql) ]]; then
     PG_VERSION=$(pg_config --version)
     echo "postgres exists."
@@ -74,19 +71,9 @@ else
     exit 1
 fi
 
-if [[ $(psql -U ${PGUSER} -h ${PGHOST} -p ${PGPORT} -c "SELECT oid, extname, extversion FROM pg_extension;" | grep vector) ]]; then
-  echo done.
-else
-  echo "Installing pgvector:"
-  git clone https://github.com/pgvector/pgvector.git /tmp/
-  cd /tmp/pgvector
-  make
-  make install
-  cd $SCRIPT_DIR
-fi
-
-echo create db
+echo "⛃ Setting up the local Neotoma database:"
 psql -U ${PGUSER} -h ${PGHOST} -p ${PGPORT} -f dbsetup.sql
-echo now restore:
-pg_restore -U $PGUSER -h $PGHOST -p $PGPORT -c --no-owner --no-privileges -d neotoma neotoma_clean.dump
+echo "Empty database is now set up."
+echo " ▶ Restoring database content:"
+psql -U $PGUSER -h $PGHOST -p $PGPORT -d postgres -f neotoma_clean.sql
 echo done.
