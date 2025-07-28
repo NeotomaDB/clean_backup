@@ -1,5 +1,6 @@
 
 .env
+infrastructure/parameters.json
 
 *.gz
 
