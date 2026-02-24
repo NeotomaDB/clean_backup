@@ -75,5 +75,5 @@ echo "⛃ Setting up the local Neotoma database:"
 psql -U ${PGUSER} -h ${PGHOST} -p ${PGPORT} -f dbsetup.sql
 echo "Empty database is now set up."
 echo " ▶ Restoring database content:"
-psql -U $PGUSER -h $PGHOST -p $PGPORT -d postgres -f neotoma_clean.sql
+psql -U $PGUSER -h $PGHOST -p $PGPORT -d postgres -f neotoma_clean*.dump
 echo done.

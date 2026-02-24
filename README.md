@@ -3,18 +3,35 @@
 
 [![lifecycle](https://img.shields.io/badge/lifecycle-stable-green.svg)](https://www.tidyverse.org/lifecycle/#stable)
 
-
 # Neotoma Anonymized Backups
 
 This repository generates a container service for Neotoma that copies the [Neotoma Paleoecology Database](https://neotomadb.org) into a Docker container and overwrites sensitive data using a random `md5` hash. The bash script running in the container then uploads the data to a Neotoma AWS S3 bucket where the snapshot is made publically available through a URL that is shared on the Neotoma website.
 
+The goal of the repository is to provide preiodic snapshots of the database that can be freely shared with the public, eliminating any sensitive or secure data.
+
 The compressed file (`neotoma_clean_{DATETIME}.tr.gz`) includes a [bash script](archives/regenbash.sh) that will re-build the database in a user's local Postgres instance. Currently the bash script only runs for Mac and Linux. There is an experimental [Windows batch script](archives/experimental_win_restore.bat) that can be used with caution.
+
+The code in this repository is meant to operate with AWS Cloud Service, to deploy the container, dump the database contents, and make them available from a fixed S3 bucket location, available through a public URL.
 
 We welcome any user contributions see the [contributors guide](CONTRIBUTING.md).
 
 ## Restoring the Database
 
-The most recent snapshot of the Neotoma Database will always be tagged as `neotoma_clean_latest` in the compressed file, but the actual SQL file used to restore the database will be named with the date the snapshot was taken. Generally, the snapshots will be taken every month. If there is a need for a more recent snapshot, please contact the database administrators to request a newer snapshot.
+The most recent snapshot of the Neotoma Database will always be tagged as `neotoma_clean_latest` from the download source, but the actual SQL file used to restore the database will be named with the date the snapshot was taken. Generally, the snapshots will be taken every month. If there is a need for a more recent snapshot, please contact the database administrators to request a newer snapshot.
+
+### Example file contents
+
+This assumes that the most recent snapshot was taken on the 5th of August, 2025 (celebrating the birthday of Canadian painter [Tom Thompson](https://en.wikipedia.org/wiki/Tom_Thomson)).
+
+* **neotoma_clean_latest.tar.gz**
+  * dbsetup.sql
+  * experimental_win_restore.bat
+  * neotoma_clean_2025-08-05.sql
+  * regenbash.sh
+
+We cannot promise that the `experimental_win_restore.bat` file works, but for Mac and Windows users, the `regenbash.sh` script should automatically ensure all extensions are created in your local server, and the SQL database is restored.
+
+You may also use a database tool such as DBeaver or PGAdmin to restore the database yourself from the `SQL` file.
 
 ### Postgres Extensions Used
 

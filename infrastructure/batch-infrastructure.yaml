@@ -54,6 +54,7 @@ Resources:
                 Action:
                   - s3:PutObject
                   - s3:PutObjectAcl
+                  - s3:GetObjectTagging
                 Resource: 
                   - arn:aws:s3:::neotoma-remote-store/*
               - Effect: Allow
@@ -125,7 +126,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Run database sanitization monthly"
-      ScheduleExpression: "cron(0 2 1 * ? *)"  # 2 AM on the 1st of every month
+      ScheduleExpression: "cron(0 2 5 * ? *)"  # 2 AM on the 1st of every month
       State: ENABLED
       Targets:
         - Arn: !GetAtt JobQueue.JobQueueArn

@@ -14,13 +14,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create necessary directories
-RUN mkdir -p /home/app /home/archives /var/log \
-    && chown -R postgres:postgres /home/app /home/archives /var/log
+RUN mkdir -p /home/app /home/archives /home/assets /var/log \
+    && chown -R postgres:postgres /home/app /home/archives /home/assets /var/log
 
 # Copy your scripts
 COPY ./app/scrubbed_database.sh /home/app/
 COPY ./app/connect_database.sh /home/app/
 RUN chmod +x /home/app/*.sh
+
+COPY ./archives/* /home/archives
 
 # Create a startup script that handles both PostgreSQL and your job
 COPY ./batch_entrypoint.sh /usr/local/bin/
